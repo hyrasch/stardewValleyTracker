@@ -22,6 +22,7 @@
       <button class="tab" data-view="bundles" role="tab">Bundles</button>
       <button class="tab" data-view="planner" role="tab">Planner</button>
       <button class="tab" data-view="items" role="tab">Items</button>
+      <button class="tab" data-view="guide" role="tab">Guide</button>
     </nav>
   </header>
 
@@ -61,9 +62,12 @@
   <main id="app" aria-live="polite"></main>
 
   <footer class="foot">
+    <p>The Guide tab reproduces the <a href="https://github.com/Zamiell/stardew-valley/blob/main/Min-Max_Guide.md" target="_blank" rel="noopener">Min-Max Routing / Strategy guide</a> by BlackSight6 &amp; Zamiel, licensed GPL-3.0.</p>
     <p>Bundle definitions come from <em>Custom Community Center Bundles</em> (variant Custom_Cornucopia_RSV_SVE). Item sources come from the SVE, Ridgeside Village and Cornucopia data files; entries marked <span class="chip unsure">verify</span> could not be confirmed there. Progress is saved in this browser.</p>
   </footer>
 
+  <script src="js/vendor/marked.min.js"></script>
+  <script src="js/guide-data.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
 </body>

@@ -24,7 +24,7 @@
   /* ---------------- state ---------------- */
   const defaults = () => ({
     done: {},
-    prefs: { view: 'overview', season: 'spring', weather: 'any', onlyNow: false, hideDone: false, group: 'conditions', q: '', openGroups: {} },
+    prefs: { view: 'overview', season: 'spring', weather: 'any', onlyNow: false, hideDone: false, group: 'conditions', q: '', openGroups: {}, guideDay: 1 },
   });
   let state = load();
 
@@ -366,12 +366,124 @@
     return h;
   }
 
+  /* ---------------- guide (Markdown, rendered with marked) ---------------- */
+  let guideCache = null; // { html, toc: [{id, text, depth}], days: [{season, day, id}] }
+  function ghSlug(text, used) {
+    let s = text.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s/g, '-');
+    const base = s; let i = 1;
+    while (used.has(s)) s = base + '-' + i++;
+    used.add(s);
+    return s;
+  }
+  function buildGuide() {
+    if (guideCache) return guideCache;
+    if (typeof GUIDE_MD === 'undefined' || typeof marked === 'undefined') return null;
+    const used = new Set(), toc = [], days = [];
+    marked.use({
+      gfm: true,
+      renderer: {
+        heading(token) {
+          const html = this.parser.parseInline(token.tokens);
+          const plain = token.text.replace(/[*_`]/g, '');
+          const id = ghSlug(plain, used);
+          toc.push({ id, text: plain, depth: token.depth });
+          const m = /^(Spring|Summer|Fall|Winter) (\d+)/.exec(plain);
+          if (m && token.depth === 3) days.push({ season: m[1].toLowerCase(), day: +m[2], id });
+          return `<h${token.depth} id="${id}"><a class="anchor" href="#${id}" aria-hidden="true">#</a>${html}</h${token.depth}>`;
+        },
+        link(token) {
+          const html = this.parser.parseInline(token.tokens);
+          const ext = /^https?:/i.test(token.href);
+          return `<a href="${esc(token.href)}"${token.title ? ` title="${esc(token.title)}"` : ''}${ext ? ' target="_blank" rel="noopener"' : ''}>${html}</a>`;
+        },
+      },
+    });
+    guideCache = { html: marked.parse(GUIDE_MD), toc, days };
+    return guideCache;
+  }
+  function renderGuide() {
+    const g = buildGuide();
+    if (!g) return '<div class="empty">The guide could not be loaded (js/guide-data.js or marked is missing).</div>';
+    const day = state.prefs.guideDay || 1;
+    const toc = g.toc.filter(t => t.depth === 2 || t.depth === 3)
+      .map(t => `<li class="d${t.depth}"><a href="#${t.id}">${esc(t.text)}</a></li>`).join('');
+    const meta = typeof GUIDE_META !== 'undefined' ? GUIDE_META : {};
+    return `<div class="guide-wrap">
+      <aside class="guide-side">
+        <div class="guide-jump card">
+          <span class="qty">Go to</span>
+          <select data-guide-season aria-label="Season">${SEASONS.map(s => `<option value="${s}" ${s === state.prefs.season ? 'selected' : ''}>${SEASON_LABEL[s]}</option>`).join('')}</select>
+          <input type="number" min="1" max="28" value="${day}" data-guide-day aria-label="Day">
+          <button type="button" class="btn small" data-guide-go>Go</button>
+          <span class="qty" data-match-count></span>
+        </div>
+        <nav class="guide-toc card" aria-label="Guide contents"><ul>${toc}</ul></nav>
+      </aside>
+      <article class="md card">
+        <div class="guide-head">
+          <b>${esc(meta.title || 'Min-Max Guide')}</b> by ${esc(meta.authors || '')} ·
+          <a href="${esc(meta.source || '#')}" target="_blank" rel="noopener">source on GitHub</a> ·
+          <a href="${esc(meta.licenseUrl || '#')}" target="_blank" rel="noopener">${esc(meta.license || '')}</a> · snapshot ${esc(meta.snapshot || '')}.
+          Written for vanilla 1.6: with SVE, Ridgeside and Cornucopia installed some prices, spawns and bundles differ.
+        </div>
+        ${g.html}
+      </article>
+    </div>`;
+  }
+  function guideJump() {
+    const g = buildGuide(); if (!g) return;
+    const season = state.prefs.season;
+    const day = Math.min(28, Math.max(1, +state.prefs.guideDay || 1));
+    const before = g.days.filter(d => d.season === season && d.day <= day).sort((a, b) => b.day - a.day);
+    const target = before[0] || g.days.find(d => d.season === season);
+    if (!target) { toast('The route has no entry for that season.'); return; }
+    const el = document.getElementById(target.id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    }
+    if (target.day !== day) toast(`No entry for ${SEASON_LABEL[season]} ${day}, showing ${SEASON_LABEL[season]} ${target.day}.`);
+  }
+  function highlightGuide() {
+    const q = state.prefs.q.trim();
+    const art = app.querySelector('article.md');
+    if (!art || !q) return 0;
+    const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const test = new RegExp(re.source, 'i');
+    const walker = document.createTreeWalker(art, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) if (test.test(walker.currentNode.nodeValue)) nodes.push(walker.currentNode);
+    let n = 0;
+    nodes.forEach(node => {
+      const s = node.nodeValue, frag = document.createDocumentFragment();
+      let last = 0;
+      s.replace(re, (m, idx) => {
+        frag.appendChild(document.createTextNode(s.slice(last, idx)));
+        const mk = document.createElement('mark'); mk.textContent = m; frag.appendChild(mk);
+        last = idx + m.length; n++;
+        return m;
+      });
+      frag.appendChild(document.createTextNode(s.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+    return n;
+  }
+  function afterGuideRender() {
+    const n = highlightGuide();
+    const c = app.querySelector('[data-match-count]');
+    if (c) c.textContent = state.prefs.q.trim() ? (n ? `${n} match${n === 1 ? '' : 'es'}` : 'no matches') : '';
+    const first = app.querySelector('article.md mark');
+    if (first) first.scrollIntoView({ block: 'center' });
+  }
+
   /* ---------------- render + events ---------------- */
   const app = document.getElementById('app');
   function render() {
     const v = state.prefs.view;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
-    app.innerHTML = v === 'overview' ? renderOverview() : v === 'bundles' ? renderBundles() : v === 'planner' ? renderPlanner() : renderItems();
+    document.body.classList.toggle('guide-mode', v === 'guide');
+    app.innerHTML = v === 'overview' ? renderOverview() : v === 'bundles' ? renderBundles() : v === 'planner' ? renderPlanner() : v === 'guide' ? renderGuide() : renderItems();
+    if (v === 'guide') afterGuideRender();
   }
   function syncControls() {
     document.getElementById('season').value = state.prefs.season;
@@ -403,7 +515,16 @@
 
   app.addEventListener('change', e => {
     const slot = e.target.closest('[data-slot]');
-    if (slot) toggleSlot(slot.dataset.slot);
+    if (slot) { toggleSlot(slot.dataset.slot); return; }
+    const gd = e.target.closest('[data-guide-day]');
+    if (gd) { state.prefs.guideDay = Math.min(28, Math.max(1, +gd.value || 1)); save(); return; }
+    const gs = e.target.closest('[data-guide-season]');
+    if (gs) { state.prefs.season = gs.value; save(); document.getElementById('season').value = gs.value; }
+  });
+  app.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.closest('[data-guide-day]')) {
+      state.prefs.guideDay = Math.min(28, Math.max(1, +e.target.value || 1)); save(); guideJump();
+    }
   });
   // Remember which planner groups the user opened or closed (capture: toggle doesn't bubble).
   app.addEventListener('toggle', e => {
@@ -431,6 +552,15 @@
       const el = document.getElementById(jump.dataset.jump);
       if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       return;
+    }
+    if (e.target.closest('[data-guide-go]')) { guideJump(); return; }
+    // The guide has a few links to headings whose slug differs; fall back to the closest heading id.
+    const anchor = e.target.closest('article.md a[href^="#"], .guide-toc a[href^="#"]');
+    if (anchor) {
+      const id = decodeURIComponent(anchor.getAttribute('href').slice(1));
+      let el = document.getElementById(id);
+      if (!el) el = app.querySelector(`article.md [id^="${CSS.escape(id)}"]`) || app.querySelector(`article.md [id*="${CSS.escape(id.split('-')[0])}"]`);
+      if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
     }
     const expand = e.target.closest('[data-expand]');
     if (expand) {

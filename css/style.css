@@ -247,6 +247,49 @@ main { max-width: 1200px; margin: 0 auto; padding: 12px 16px 60px; }
 .table .how { font-size: 13px; }
 .table .src-meta { margin-top: 0; }
 
+/* ---------- guide ---------- */
+body.guide-mode .toolbar .field:not(.search), body.guide-mode .toolbar .check, body.guide-mode .actions { display: none; }
+.guide-wrap { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; align-items: start; }
+.guide-side { position: sticky; top: 66px; display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 80px); }
+.guide-jump { padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; }
+.guide-jump select, .guide-jump input { background: var(--card-2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font-size: 13px; }
+.guide-jump input { width: 58px; }
+.guide-toc { overflow: auto; padding: 6px 0; flex: 1 1 auto; min-height: 0; }
+.guide-toc ul { list-style: none; margin: 0; padding: 0; }
+.guide-toc li a { display: block; padding: 4px 12px; color: var(--ink-2); text-decoration: none; font-size: 13px; border-left: 3px solid transparent; }
+.guide-toc li.d2 a { font-weight: 700; color: var(--ink); margin-top: 6px; }
+.guide-toc li.d3 a { padding-left: 22px; }
+.guide-toc li a:hover { background: var(--card-2); border-left-color: var(--accent); }
+.md { padding: 20px 28px 40px; min-width: 0; overflow-wrap: anywhere; font-size: 14.5px; }
+.md h1 { font-size: 26px; margin: 6px 0 14px; }
+.md h2 { font-size: 21px; margin: 34px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); position: relative; }
+.md h3 { font-size: 17px; margin: 24px 0 8px; position: relative; }
+.md h4 { font-size: 15px; margin: 18px 0 6px; }
+.md p, .md ul, .md ol { margin: 0 0 10px; }
+.md li { margin: 3px 0; }
+.md ul ul, .md ol ul, .md ul ol { margin: 2px 0; }
+.md a { color: var(--accent); }
+.md table { border-collapse: collapse; margin: 8px 0 14px; font-size: 13.5px; display: block; overflow-x: auto; max-width: 100%; }
+.md th, .md td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; vertical-align: top; }
+.md th { background: var(--card-2); }
+.md code { background: var(--card-2); padding: 1px 5px; border-radius: 4px; font-size: 90%; }
+.md blockquote { margin: 8px 0; padding: 6px 12px; border-left: 3px solid var(--line); color: var(--ink-2); }
+.md hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+.md .anchor { position: absolute; left: -20px; width: 20px; opacity: 0; color: var(--ink-3); text-decoration: none; font-weight: 400; }
+.md h2:hover .anchor, .md h3:hover .anchor { opacity: 1; }
+.md mark { background: var(--warn-soft); color: inherit; padding: 0 2px; border-radius: 3px; }
+.md .flash { animation: flash 1.4s ease-out; }
+@keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
+.guide-head { padding: 10px 14px; margin-bottom: 16px; background: var(--card-2); border-radius: 8px; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.guide-head b { color: var(--ink); }
+@media (max-width: 900px) {
+  .guide-wrap { grid-template-columns: 1fr; }
+  .guide-side { position: static; max-height: none; }
+  .guide-toc { max-height: 240px; }
+  .md { padding: 14px 16px 30px; }
+  .md .anchor { display: none; }
+}
+
 /* ---------- misc ---------- */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 13px; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s; }
 .toast.show { opacity: 1; }

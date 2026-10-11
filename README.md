@@ -28,6 +28,11 @@ most browsers. Progress is stored in the browser's `localStorage`; use
   (rainy days, sunny-only, nights, time windows, specific calendar days, areas
   that need unlocking), by season, by location or by activity.
 - **Items** – a searchable table of all 198 items.
+- **Guide** – the [Min-Max Routing / Strategy guide](https://github.com/Zamiell/stardew-valley/blob/main/Min-Max_Guide.md)
+  by BlackSight6 & Zamiel (GPL-3.0, see `guide/LICENSE`), rendered from
+  `guide/Min-Max_Guide.md` with a table of contents, a "go to Spring 5" style
+  day jumper and in-guide search. The guide targets vanilla 1.6, so some
+  details differ in this modded game.
 
 The toolbar's **Season**, **Weather** and **Only what I can do now** controls
 filter and highlight everything by what is currently possible.
@@ -47,6 +52,16 @@ filter and highlight everything by what is currently possible.
   ```
 
   Note: Vortex deploys mods as symlinks, so the script follows links.
+
+- `scripts/build_guide.py` – embeds `guide/Min-Max_Guide.md` into
+  `js/guide-data.js` (no fetch needed, so the page also works from `file://`).
+  To pull a newer version of the guide:
+
+  ```bash
+  curl -L -o guide/Min-Max_Guide.md https://raw.githubusercontent.com/Zamiell/stardew-valley/main/Min-Max_Guide.md && python -I scripts/build_guide.py
+  ```
+
+- `js/vendor/marked.min.js` – [marked](https://github.com/markedjs/marked) 15.0.7 (MIT), the Markdown renderer.
 
 ## Adjusting
 
