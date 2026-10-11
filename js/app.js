@@ -607,6 +607,12 @@
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
   }
 
+  // Keep anchor jumps and the guide sidebar clear of the sticky header, whatever its height.
+  const chrome = document.getElementById('chrome');
+  function measureChrome() { document.documentElement.style.setProperty('--chrome-h', chrome.offsetHeight + 'px'); }
+  if (window.ResizeObserver) new ResizeObserver(measureChrome).observe(chrome); else window.addEventListener('resize', measureChrome);
+
   syncControls();
   render();
+  measureChrome();
 })();
