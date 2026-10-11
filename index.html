@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bundle Tracker</title>
+  <meta name="description" content="Community Center bundle tracker for the Custom Cornucopia / Ridgeside / SVE bundle pack.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍎</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">🍎</span>
+      <div>
+        <h1>Bundle Tracker</h1>
+        <p class="sub">Community Center · Cornucopia + Ridgeside + SVE pack</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" data-view="overview" role="tab">Overview</button>
+      <button class="tab" data-view="bundles" role="tab">Bundles</button>
+      <button class="tab" data-view="planner" role="tab">Planner</button>
+      <button class="tab" data-view="items" role="tab">Items</button>
+    </nav>
+  </header>
+
+  <section class="toolbar" aria-label="Filters">
+    <label class="field search">
+      <span class="sr-only">Search</span>
+      <input type="search" id="search" placeholder="Search items, bundles, places…" autocomplete="off">
+    </label>
+    <label class="field">
+      <span>Season</span>
+      <select id="season">
+        <option value="spring">Spring</option>
+        <option value="summer">Summer</option>
+        <option value="fall">Fall</option>
+        <option value="winter">Winter</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Weather</span>
+      <select id="weather">
+        <option value="any">Any</option>
+        <option value="sun">Sunny</option>
+        <option value="rain">Rainy</option>
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" id="onlyNow"> Only what I can do now</label>
+    <label class="check"><input type="checkbox" id="hideDone"> Hide completed</label>
+    <div class="spacer"></div>
+    <div class="actions">
+      <button id="exportBtn" class="btn" title="Download your progress as JSON">Export</button>
+      <button id="importBtn" class="btn" title="Load a progress JSON file">Import</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+      <button id="resetBtn" class="btn danger" title="Clear all progress">Reset</button>
+    </div>
+  </section>
+
+  <main id="app" aria-live="polite"></main>
+
+  <footer class="foot">
+    <p>Bundle definitions come from <em>Custom Community Center Bundles</em> (variant Custom_Cornucopia_RSV_SVE). Item sources come from the SVE, Ridgeside Village and Cornucopia data files; entries marked <span class="chip unsure">verify</span> could not be confirmed there. Progress is saved in this browser.</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
