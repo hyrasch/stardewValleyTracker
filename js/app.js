@@ -468,12 +468,16 @@
     });
     return n;
   }
+  let lastGuideQuery = '';
   function afterGuideRender() {
     const n = highlightGuide();
     const c = app.querySelector('[data-match-count]');
-    if (c) c.textContent = state.prefs.q.trim() ? (n ? `${n} match${n === 1 ? '' : 'es'}` : 'no matches') : '';
+    const q = state.prefs.q.trim();
+    if (c) c.textContent = q ? (n ? `${n} match${n === 1 ? '' : 'es'}` : 'no matches') : '';
+    // Only jump to the first match when the search text actually changed.
     const first = app.querySelector('article.md mark');
-    if (first) first.scrollIntoView({ block: 'center' });
+    if (first && q !== lastGuideQuery) first.scrollIntoView({ block: 'center' });
+    lastGuideQuery = q;
   }
 
   /* ---------------- render + events ---------------- */
@@ -492,10 +496,26 @@
     document.getElementById('hideDone').checked = state.prefs.hideDone;
     document.getElementById('search').value = state.prefs.q;
   }
-  function setPref(k, v) {
-    state.prefs[k] = v; save(); render();
-    if (k === 'view' || k === 'group') window.scrollTo({ top: 0 });
+  // Scroll position is remembered per view, so switching tabs and coming back lands where you left.
+  function rememberScroll() {
+    state.prefs.scroll = state.prefs.scroll || {};
+    state.prefs.scroll[state.prefs.view] = Math.round(window.scrollY);
   }
+  function restoreScroll() {
+    window.scrollTo({ top: (state.prefs.scroll || {})[state.prefs.view] || 0 });
+  }
+  function setPref(k, v) {
+    if (k === 'view') rememberScroll();
+    state.prefs[k] = v; save(); render();
+    if (k === 'view') restoreScroll();
+    if (k === 'group') window.scrollTo({ top: 0 });
+  }
+  let scrollTimer;
+  window.addEventListener('scroll', () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => { rememberScroll(); save(); }, 150);
+  }, { passive: true });
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   function toggleSlot(key) {
     if (state.done[key]) delete state.done[key]; else state.done[key] = true;
     save();
@@ -615,4 +635,5 @@
   syncControls();
   render();
   measureChrome();
+  restoreScroll();
 })();
